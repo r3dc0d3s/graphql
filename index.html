@@ -12,7 +12,7 @@
   <main id="login-page">
     <h1>Login</h1>
 
-    <form id="login-form">
+    <form id="login-form" method="post">
       <label for="identifier">Username or Email</label>
       <input id="identifier" name="identifier" type="text" required />
 
@@ -87,8 +87,8 @@
     <button id="logout-button" class="danger">Logout</button>
   </main>
 
-  <script src="script.js"></script>
-  <script src="xp-range-test.js"></script>
+  <script type="module" src="src/script.js"></script>
+  <script src="src/xp-range-test.js"></script>
 
 </body>
 </html>

@@ -116,3 +116,43 @@ This session focused on debugging connectivity issues, resolving a critical `Ref
 **Next Steps:**
 - User to validate the new XP query in GraphiQL and `testMyXP()` function.
 - Proceed with building the first SVG graph ("XP Over Time").
+
+---
+
+# Development Log - Recent Session
+
+## Session Summary: Cleanup + XP Query Fix + Modularization
+
+### 1. Fixed malformed HTML in `index.html`
+**Problem:** `index.html` had markup outside `<body>` and duplicated fragments after `</html>`.
+
+**Resolution:**
+- Rewrote `index.html` into a clean, valid structure with a login form inside `<main>`.
+- Added a proper hook for `script.js`.
+
+### 2. XP Query failure: "not a valid graphql query"
+**Problem:** The XP query failed in `testMyXP()` while it worked in GraphiQL.
+
+**Root Cause:** An extra trailing `}` at the end of `xpQueryForGraph` made the query invalid.
+
+**Resolution:**
+- Removed the extra closing brace from `xpQueryForGraph` in `script.js`.
+- Confirmed the query string matched GraphiQL.
+
+### 3. Converted the app to ES modules (no bundler)
+**Goal:** Reduce the monolithic `script.js` and separate concerns.
+
+**Resolution:**
+- Switched `index.html` to use `<script type="module" src="script.js"></script>`.
+- Split the code into new modules:
+  - `dom.js` (DOM references)
+  - `api.js` (GraphQL + auth)
+  - `data.js` (formatting + data shaping)
+  - `render.js` (profile + SVG rendering)
+  - `app.js` (app init, event listeners, page state)
+- Simplified `script.js` to only import and run `initApp()`.
+- Restored `GRAPHQL_ENDPOINT` inside `xp-range-test.js` since globals were removed.
+
+**Next Steps:**
+- Continue styling incrementally.
+- Add or refine SVG stats section in the profile UI as needed.

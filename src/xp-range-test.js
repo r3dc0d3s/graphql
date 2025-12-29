@@ -5,7 +5,7 @@
 // Or just:
 //   runXpRangeTest(); // defaults to last 30 days (UTC-ish)
 
-//const GRAPHQL_ENDPOINT = "https://learn.zone01oujda.ma/api/graphql-engine/v1/graphql";
+const GRAPHQL_ENDPOINT = "https://learn.zone01oujda.ma/api/graphql-engine/v1/graphql";
 
 const XP_RANGE_QUERY = `
 query GetXPRange($from: timestamptz!, $to: timestamptz!) {
