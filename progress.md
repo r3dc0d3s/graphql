@@ -55,3 +55,64 @@ This document details the development process of the GraphQL Profile Page projec
 
 ---
 This log reflects the completion of a fully functional and styled frontend application, ready for final integration with the live GraphQL API's data responses.
+
+# Development Log - Monday, December 29, 2025
+
+## Session Summary: Fixing Connectivity & Refining XP Query
+
+This session focused on debugging connectivity issues, resolving a critical `ReferenceError`, and deeply refining the GraphQL query for accurate XP calculation.
+
+---
+
+### 1. Connectivity Debugging: `TypeError: Failed to fetch`
+
+**Problem:** The application was consistently throwing `TypeError: Failed to fetch` when attempting to log in, even after implementing real authentication and serving files locally with `serve`.
+
+**Initial Hypotheses & Troubleshooting:**
+- **CORS Extension:** Initially suggested as a workaround, but user preferred a fundamental solution.
+- **Local Server (`serve`):** Implemented to serve files from `http://localhost:[port]` instead of `file:///`, which is standard practice but did not resolve the `TypeError`.
+
+**Root Cause Identification (User-led Insight):**
+- Upon the user's insistence to re-read `requirements.md` and their own debugging, the critical error was found to be a **port mismatch in the hardcoded API URL**.
+- The `script.js` was attempting to fetch from `https://zone01oujda.ma/...` instead of the correct `https://learn.zone01oujda.ma/...`.
+
+**Resolution:**
+- The `fetch` URLs in `script.js` were updated to correctly point to `https://learn.zone01oujda.ma/api/auth/signin` and `https://learn.zone01oujda.ma/api/graphql-engine/v1/graphql`.
+- This resolved the `TypeError: Failed to fetch`, confirming that the API server does have appropriate CORS headers for `localhost`.
+
+---
+
+### 2. `ReferenceError: jwt is not defined`
+
+**Problem:** After successfully logging in, the `fetchAndDisplayProfile()` function was throwing a `ReferenceError: jwt is not defined`.
+
+**Root Cause:** A critical line, `const jwt = localStorage.getItem('jwt');`, was inadvertently removed or never added to the beginning of the `fetchAndDisplayProfile` function during previous refactoring. This meant the `jwt` variable was not in scope when the `fetch` call's `Authorization` header tried to use it.
+
+**Resolution:**
+- Added `const jwt = localStorage.getItem('jwt');` to the beginning of the `fetchAndDisplayProfile` function.
+- This allowed the `fetch` call to correctly use the JWT for Bearer authentication.
+
+---
+
+### 3. Refining XP Query for Accuracy (Addressing Missing 70kb XP)
+
+**Problem:** The initially proposed `xpQueryForGraph` (`path: { _nlike: "%piscine%" }`) correctly excluded small piscine exercises but also inadvertently filtered out the large "Piscine JS" project's XP (approximately 70kb), which the user wanted to include.
+
+**Solution Approach (User-driven Data Analysis):**
+- The user performed detailed data exploration in GraphiQL using queries that fetched `amount`, `path`, `object { name, type }` for all XP transactions.
+- This revealed that the main "Piscine JS" project had `object.type: "piscine"`, while smaller quests were `object.type: "exercise"` and had "piscine" in their `path`.
+
+**Refined Query Logic:**
+- The goal became: "Include all XP, generally exclude anything with 'piscine' in its path, *unless* the object type is specifically 'piscine' (to capture the main project)."
+- This was achieved using a GraphQL `_or` operator in the `where` clause:
+  ```graphql
+  _or: [
+    { path: { _nlike: "%piscine%" } },
+    { object: { type: { _eq: "piscine" } } }
+  ]
+  ```
+- This ensures all major projects are counted accurately.
+
+**Next Steps:**
+- User to validate the new XP query in GraphiQL and `testMyXP()` function.
+- Proceed with building the first SVG graph ("XP Over Time").
