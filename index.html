@@ -1,48 +1,92 @@
+<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>GraphQL Profile</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <!-- LOGIN -->
   <main id="login-page">
     <h1>Login</h1>
+
     <form id="login-form">
       <label for="identifier">Username or Email</label>
-      <input id="identifier" name="identifier" type="text" required>
+      <input id="identifier" name="identifier" type="text" required />
 
       <label for="password">Password</label>
-      <input id="password" name="password" type="password" required>
+      <input id="password" name="password" type="password" required />
 
       <button type="submit">Sign In</button>
       <p id="login-error" aria-live="polite"></p>
     </form>
   </main>
-    <main id="profile-page" style="display: none;">
-      <div id="profile-data">
-        <h2>Welcome, <span id="user-name"></span>!</h2>
-        <p>User ID: <span id="user-id"></span></p>
-         <p>Email: <span id="user-email"></span></p>
+
+  <!-- PROFILE -->
+  <main id="profile-page" style="display:none;">
+    <header class="profile-header">
+      <h1>My Profile</h1>
+
+      <nav class="tabs" aria-label="Profile navigation">
+        <button class="tab is-active" type="button" data-panel="panel-profile" aria-controls="panel-profile" aria-selected="true">
+          Profile
+        </button>
+        <button class="tab" type="button" data-panel="panel-xp" aria-controls="panel-xp" aria-selected="false">
+          XP
+        </button>
+        <button class="tab" type="button" data-panel="panel-milestones" aria-controls="panel-milestones" aria-selected="false">
+          Milestones
+        </button>
+        <button class="tab" type="button" data-panel="panel-graphs" aria-controls="panel-graphs" aria-selected="false">
+          Graphs
+        </button>
+      </nav>
+    </header>
+
+    <!-- Panel 1 -->
+    <section id="panel-profile" class="panel is-active" role="region" aria-label="Profile section">
+      <h2>Welcome, <span id="user-name"></span>!</h2>
+      <p><strong>User ID:</strong> <span id="user-id"></span></p>
+      <p><strong>Email:</strong> <span id="user-email"></span></p>
+    </section>
+
+    <!-- Panel 2 -->
+    <section id="panel-xp" class="panel" role="region" aria-label="XP section">
+      <h2>XP</h2>
+      <p>
+        <strong>Total XP:</strong>
+        <span id="user-xp">...</span>
+        <span class="muted" id="user-xp-raw"></span>
+      </p>
+    </section>
+
+    <!-- Panel 3 (derived from same XP data: no new query needed) -->
+    <section id="panel-milestones" class="panel" role="region" aria-label="Milestones section">
+      <h2>Milestones</h2>
+      <p><strong>First XP date:</strong> <span id="ms-first">...</span></p>
+      <p><strong>Last XP date:</strong> <span id="ms-last">...</span></p>
+      <p><strong>Projects with XP:</strong> <span id="ms-projects">...</span></p>
+      <p><strong>Biggest single XP:</strong> <span id="ms-best">...</span></p>
+    </section>
+
+    <!-- Panel 4 -->
+    <section id="panel-graphs" class="panel" role="region" aria-label="Graphs section">
+      <h2>Statistics</h2>
+
+      <div class="graph-container">
+        <h3>XP Progress Over Time</h3>
+        <svg id="xp-graph"></svg>
+
+        <h3>XP by Project</h3>
+        <svg id="xp-by-project"></svg>
       </div>
-      <p><strong>Total XP:</strong> <span id="user-xp">...</span></p>
+    </section>
 
-        <section id="graphs">
-    <h2>Statistics</h2>
-    
-    <div class="graph-container">
-      <h3>XP Progress Over Time</h3>
-      <svg id="xp-graph" width="800" height="400"></svg>
-      
-      <h3>XP by project</h3>
-      <svg id="xp-by-project"></svg>
-    </div>
+    <button id="logout-button" class="danger">Logout</button>
+  </main>
 
-
-  </section>
-      <button id="logout-button">Logout</button>
-   </main>
   <script src="script.js"></script>
 </body>
 </html>
