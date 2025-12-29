@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GraphQL Profile</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main id="login-page">
+    <h1>Login</h1>
+    <form id="login-form">
+      <label for="identifier">Username or Email</label>
+      <input id="identifier" name="identifier" type="text" required>
+
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" required>
+
+      <button type="submit">Sign In</button>
+      <p id="login-error" aria-live="polite"></p>
+    </form>
+  </main>
+    <main id="profile-page" style="display: none;">
+      <div id="profile-data">
+        <h2>Welcome, <span id="user-name"></span>!</h2>
+        <p>User ID: <span id="user-id"></span></p>
+         <p>Email: <span id="user-email"></span></p>
+      </div>
+      <button id="logout-button">Logout</button>
+   </main>
+  <script src="script.js"></script>
+</body>
+</html>
