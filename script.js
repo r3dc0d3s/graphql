@@ -85,6 +85,11 @@ function logout() {
   localStorage.removeItem("jwt");
   setLoginError("");
   showPage("login");
+   setLoginError("");
+
+  // clear UI remnants
+  if (xpSvg) xpSvg.innerHTML = "";
+  if (xpByProjectSvg) xpByProjectSvg.innerHTML = "";
 }
 
 function showPanel(panelId) {
