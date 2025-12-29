@@ -26,13 +26,20 @@
         <p>User ID: <span id="user-id"></span></p>
          <p>Email: <span id="user-email"></span></p>
       </div>
+      <p><strong>Total XP:</strong> <span id="user-xp">...</span></p>
+
         <section id="graphs">
     <h2>Statistics</h2>
     
     <div class="graph-container">
       <h3>XP Progress Over Time</h3>
       <svg id="xp-graph" width="800" height="400"></svg>
+      
+      <h3>XP by project</h3>
+      <svg id="xp-by-project"></svg>
     </div>
+
+
   </section>
       <button id="logout-button">Logout</button>
    </main>

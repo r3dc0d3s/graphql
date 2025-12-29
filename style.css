@@ -1,21 +1,35 @@
+
+/* Make the page scrollable (your old centering breaks once the graph is tall/wide) */
 body {
   font-family: Arial, sans-serif;
+  margin: 0;
+  min-height: 100vh;
+  background-color: #f4f4f4;
+
   display: flex;
   justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  margin: 0;
-  background-color: #f4f4f4;
+  align-items: flex-start;
+  padding: 24px 12px;
+  box-sizing: border-box;
 }
 
+/* Let profile breathe (graph needs width) */
 main {
   background-color: #fff;
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+
   width: 100%;
-  max-width: 400px;
+  max-width: 960px;
   text-align: center;
+  box-sizing: border-box;
+}
+
+/* Keep login compact inside the wider main */
+#login-page {
+  max-width: 400px;
+  margin: 0 auto;
 }
 
 form {
@@ -28,7 +42,7 @@ form {
 label {
   align-self: flex-start;
   font-weight: bold;
-  margin-bottom: -10px; /* Adjust spacing */
+  margin-bottom: -10px;
 }
 
 input[type="text"],
@@ -37,7 +51,7 @@ input[type="password"] {
   border: 1px solid #ddd;
   border-radius: 4px;
   width: 100%;
-  box-sizing: border-box; /* Include padding in width */
+  box-sizing: border-box;
 }
 
 button {
@@ -58,7 +72,7 @@ button:hover {
 #login-error {
   color: red;
   margin-top: 10px;
-  min-height: 20px; /* Reserve space for error message */
+  min-height: 20px;
 }
 
 #profile-data {
@@ -78,9 +92,31 @@ button:hover {
 
 #logout-button {
   margin-top: 20px;
-  background-color: #dc3545; /* Red color for logout */
+  background-color: #dc3545;
 }
 
 #logout-button:hover {
   background-color: #c82333;
+}
+
+/* ✅ Graph: keep it inside the card, responsive, no layout break */
+#xp-graph {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: 380px;           /* fixed height, responsive width */
+  margin-top: 16px;
+
+  border: 1px solid #eee;  /* optional, helps visually */
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+#xp-graph, #xp-by-project {
+  display: block;
+  width: 100%;
+  height: 380px;
+  margin-top: 16px;
+  border: 1px solid #eee;
+  border-radius: 8px;
 }

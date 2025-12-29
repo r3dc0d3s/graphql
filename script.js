@@ -1,212 +1,43 @@
-const loginForm = document.getElementById('login-form');
-const loginError = document.getElementById('login-error');
-const loginPage = document.getElementById('login-page');
-const profilePage = document.getElementById('profile-page');
-const logoutButton = document.getElementById('logout-button');
+// =====================
+// DOM
+// =====================
+const loginForm = document.getElementById("login-form");
+const loginError = document.getElementById("login-error");
+const loginPage = document.getElementById("login-page");
+const profilePage = document.getElementById("profile-page");
+const logoutButton = document.getElementById("logout-button");
 
-// for populating profile
-const userNameSpan = document.getElementById('user-name');
-const userIdSpan = document.getElementById('user-id');
-const userEmailSpan = document.getElementById('user-email');
+const userNameSpan = document.getElementById("user-name");
+const userIdSpan = document.getElementById("user-id");
+const userEmailSpan = document.getElementById("user-email");
 
-// GraphQL Mutations and Queries
-const loginMutation = `
-  mutation Login($identifier: String!, $password: String!){
-    login(identifier: $identifier, password: $password) {
-      jwt
-    }
-  }
-`;
+const xpSvg = document.getElementById("xp-graph");
 
+const userXpSpan = document.getElementById("user-xp");
+
+const xpByProjectSvg = document.getElementById("xp-by-project");
+
+
+
+// =====================
+// Config
+// =====================
+const GRAPHQL_ENDPOINT = "https://learn.zone01oujda.ma/api/graphql-engine/v1/graphql";
+const SIGNIN_ENDPOINT = "https://learn.zone01oujda.ma/api/auth/signin";
+
+// =====================
+// GraphQL Queries
+// =====================
 const profileQuery = `
-  query GetProfile {
-      user {
-      id
-      login
-      email
-    }
+query GetProfile {
+  user {
+    id
+    login
+    email
   }
+}
 `;
 
-// Mocked data for now
-const mockedProfileData = {
-  id: 'user-3',
-  login: 'CTF_Master',
-  email: 'ctf.master@example.com',
-};
-
-// Helper function to show/hide pages
-const showPage = (pageToShow) => {
-  if (pageToShow === 'profile') {
-    loginPage.style.display = 'none';
-    profilePage.style.display = 'block';
-  } else if (pageToShow === 'login')  {
-    loginPage.style.display = 'block';
-    profilePage.style.display = 'none';
-  }
-};
-
-// --- Profile Data Handling ---
-
-const fetchAndDisplayProfile = async () => {
-      const jwt = localStorage.getItem('jwt');
-      try {
-        const response = await fetch('https://learn.zone01oujda.ma/api/graphql-engine/v1/graphql', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${jwt}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            query: profileQuery
-          })
-        });
-
-        if(!response.ok){
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-        const result = await response.json();
-
-        //if we encounter a graphql error even if http successful
-        if(result.errors){
-            console.error("GraphQL errors occurred:", result.errors); // Log all errors for debugging
-            throw new Error(result.errors[0].message); //avoid overwhelming the user
-        }
-
-        const user = result.data.user[0];
-        console.log(user)
-
-        userNameSpan.textContent = user.login;
-        userIdSpan.textContent = user.id;
-        userEmailSpan.textContent = user.email;
-
-            const xpData = await fetchXPData();
-            if (xpData) {
-              drawXPGraph(xpData);
-            }
-
-
-      } catch(error) {
-        console.error('Failed to fetch profile', error)
-      }
-}
-      
-// const mockFetchAndDisplayProfile = async () => {
-//   const jwt = localStorage.getItem('jwt');
-//   if (!jwt) {
-//     showPage('login');
-//     return;
-//   }
-
-//   try {
-//     // In a real app, this is where you'd have your `fetch` call to the GraphQL endpoint.
-//     // e.g., const res = await fetch('/graphql', { ... });
-//     // const response = await res.json();
-
-//     // To simulate, we create a fake response object with the correct structure.
-//     const response = {
-//       data: {
-//         viewer: mockedProfileData
-//       }
-//     };
-
-//     const { viewer } = response.data; // Destructure to get the nested 'viewer' object
-
-//     // Populate the spans with the data from our simulated response
-//     userNameSpan.textContent = viewer.login;
-//     userIdSpan.textContent = viewer.id;
-//     userEmailSpan.textContent = viewer.email;
-
-//   } catch (error) {
-//     console.error('Failed to fetch profile:', error);
-//     // Optional: handle fetch error, e.g., by logging out
-//     localStorage.removeItem('jwt');
-//     showPage('login');
-//   }
-// };
-
-
-// --- Event Listeners ---
-
-// loginForm.addEventListener('submit', async (event) => {
-//   event.preventDefault();
-//   const identifier = loginForm.identifier.value;
-//   const password = loginForm.password.value;
-
-//   try {
-//     console.log("Attempting to log in with:", identifier, password);
-//     const fakeJwt = "fake-jwt-token-for-testing"; //for testing purposes  now
-//     localStorage.setItem('jwt', fakeJwt);
-//     console.log('Login successful! JWT:', fakeJwt);
-//     loginError.textContent = '';
-//     showPage('profile');
-//     fetchAndDisplayProfile(); // Call to display profile data after login
-//   } catch (error) {
-//     console.error('Login failed:', error);
-//     loginError.textContent = 'Invalid username or password.';
-//   }
-// });
-
-loginForm.addEventListener('submit', async (event)=>{
-  event.preventDefault();
-  const identifier = loginForm.identifier.value;
-  const password = loginForm.password.value;
-  const encodedCredentials = btoa(`${identifier}:${password}`)
-  try {
-    const response = await fetch('https://learn.zone01oujda.ma/api/auth/signin',{
-      method: 'POST',
-      headers: {
-        'Authorization': `Basic ${encodedCredentials}`
-      }
-    });
-
-    if (!response.ok){
-      let errorMessage = `Login failed with status: ${response.status}`;
-      const contentType = response.headers.get('content-type');
-      if (contentType && contentType.includes('application/json')) {
-        const errorData = await response.json();
-        errorMessage = errorData.error || errorMessage;
-      }
-      throw new Error(errorMessage)
-    }
-
-    const jwt = await response.json(); // The JWT is the response body
-    localStorage.setItem('jwt', jwt);
-    console.log('Login successful! Real JWT received.');
-    loginError.textContent = '';
-    showPage('profile');
-    fetchAndDisplayProfile();
-    
-    } catch (error) {
-      console.error('Login failed:', error);
-      loginError.textContent = error.message;
-    }
-  })
-
-logoutButton.addEventListener('click', () => {
-  localStorage.removeItem('jwt');
-  showPage('login');
-  console.log('Logged out successfully.');
-});
-
-
-// --- Initial Page Load Check ---
-
-const mockCheckLoginStatus = () => {
-  const jwt = localStorage.getItem('jwt');
-  if (jwt) {
-    showPage('profile');
-    fetchAndDisplayProfile(); // Call to display profile data on load if logged in
-    console.log('User already logged in. Showing profile page.');
-  } else {
-    showPage('login');
-    console.log('No JWT found. Showing login page.');
-  }
-};
-
-//checkLoginStatus(); // Run on initial page load
-
-// Query: all XP transactions excluding piscine paths
 const xpQueryForGraph = `
 query GetAccurateXP {
   transaction(
@@ -221,205 +52,462 @@ query GetAccurateXP {
   ) {
     amount
     createdAt
-    object {
-      name
-    }
+    object { name }
   }
 }
 `;
 
-
-// Temp test: fetch + sum + log
-async function testMyXP() {
-  console.log("Testing XP query...");
-
-  const jwt = localStorage.getItem("jwt");
-  if (!jwt) {
-    console.error("You are not logged in (no jwt in localStorage).");
-    return null;
-  }
-
-  try {
-    const response = await fetch(
-      "https://learn.zone01oujda.ma/api/graphql-engine/v1/graphql",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${jwt}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ query: xpQueryForGraph }),
-      }
-    );
-
-    if (!response.ok) {
-      const msg = await response.text().catch(() => "");
-      throw new Error(`HTTP ${response.status} ${response.statusText} ${msg}`.trim());
-    }
-
-    const result = await response.json();
-
-    if (result.errors?.length) {
-      throw new Error(result.errors[0].message);
-    }
-
-    const transactions = result.data?.transaction ?? [];
-    const totalXP = transactions.reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
-
-    console.log("✅ Calculated Total XP:", totalXP);
-    return totalXP;
-  } catch (err) {
-    console.error("❌ Error during XP test:", err);
-    return null;
+// =====================
+// UI helpers
+// =====================
+function showPage(page) {
+  if (page === "profile") {
+    loginPage.style.display = "none";
+    profilePage.style.display = "block";
+  } else {
+    loginPage.style.display = "block";
+    profilePage.style.display = "none";
   }
 }
 
-// optional: expose it in DevTools as window.testMyXP()
-window.testMyXP = testMyXP;
+function setLoginError(msg) {
+  loginError.textContent = msg || "";
+}
 
-function drawXPGraph(transactions) {
-  if (!transactions || transactions.length === 0) {
-    console.log('No XP data to display');
-    return;
+function logout() {
+  localStorage.removeItem("jwt");
+  showPage("login");
+  setLoginError("");
+  console.log("Logged out successfully.");
+}
+
+// =====================
+// Networking helpers
+// =====================
+async function graphqlFetch(query, variables) {
+  const jwt = localStorage.getItem("jwt");
+  if (!jwt) throw new Error("Not logged in (missing jwt).");
+
+  const res = await fetch(GRAPHQL_ENDPOINT, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${jwt}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ query, variables }),
+  });
+
+  if (!res.ok) {
+    const msg = await res.text().catch(() => "");
+    throw new Error(`HTTP ${res.status} ${res.statusText} ${msg}`.trim());
   }
-  
-  const svg = document.getElementById('xp-graph');
-  const width = 800;
-  const height = 400;
-  const padding = 60;
-  
-  // Calculate cumulative XP
-  let cumulative = 0;
-  const dataPoints = transactions.map(t => {
-    cumulative += t.amount;
+
+  const json = await res.json();
+
+  if (json.errors?.length) {
+    throw new Error(json.errors[0].message);
+  }
+
+  return json.data;
+}
+
+async function fetchProfile() {
+  const data = await graphqlFetch(profileQuery);
+  const user = data?.user?.[0];
+  if (!user) throw new Error("Profile query returned no user.");
+  return user;
+}
+
+async function fetchXPTransactions() {
+  const data = await graphqlFetch(xpQueryForGraph);
+  return data?.transaction ?? [];
+}
+
+// =====================
+// Render profile + graph
+// =====================
+function renderProfile(user) {
+  userNameSpan.textContent = user.login ?? "";
+  userIdSpan.textContent = user.id ?? "";
+  userEmailSpan.textContent = user.email ?? "";
+}
+
+function formatXP(bytes) {
+  const n = Number(bytes) || 0;
+
+  // show in KB/MB like humans expect (decimal, not kibibytes)
+  const kb = n / 1000;
+  if (kb < 1000) return `${Math.round(kb).toLocaleString()} KB`;
+  const mb = kb / 1000;
+  return `${mb.toFixed(1).toLocaleString()} MB`;
+}
+
+function clamp(n, min, max) {
+  return Math.max(min, Math.min(max, n));
+}
+
+function buildXPPoints(transactions) {
+  let total = 0;
+
+  const points = transactions.map((t) => {
+    const inc = Number(t.amount) || 0;
+    total += inc;
+
     return {
       date: new Date(t.createdAt),
-      xp: cumulative
+      total, // cumulative total after this tx
+      inc,
+      name: t.object?.name || "Unknown",
     };
   });
-  
-  // Get min/max for scaling
-  const minDate = dataPoints[0].date.getTime();
-  const maxDate = dataPoints[dataPoints.length - 1].date.getTime();
-  const dateRange = maxDate - minDate;
-  const maxXP = dataPoints[dataPoints.length - 1].xp;
-  
-  // Scale functions
-  const xScale = (date) => {
-    const time = date.getTime();
-    return padding + ((time - minDate) / dateRange) * (width - 2 * padding);
-  };
-  
-  const yScale = (xp) => {
-    return height - padding - (xp / maxXP) * (height - 2 * padding);
-  };
-  
-  // Clear SVG
-  svg.innerHTML = '';
-  
-  // Draw axes
-  const axisLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-  axisLine.setAttribute('x1', padding);
-  axisLine.setAttribute('y1', height - padding);
-  axisLine.setAttribute('x2', width - padding);
-  axisLine.setAttribute('y2', height - padding);
-  axisLine.setAttribute('stroke', '#333');
-  axisLine.setAttribute('stroke-width', '2');
-  svg.appendChild(axisLine);
-  
-  const yAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-  yAxis.setAttribute('x1', padding);
-  yAxis.setAttribute('y1', padding);
-  yAxis.setAttribute('x2', padding);
-  yAxis.setAttribute('y2', height - padding);
-  yAxis.setAttribute('stroke', '#333');
-  yAxis.setAttribute('stroke-width', '2');
-  svg.appendChild(yAxis);
-  
-  // Draw line path
-  const pathData = dataPoints.map((point, i) => {
-    const x = xScale(point.date);
-    const y = yScale(point.xp);
-    return `${i === 0 ? 'M' : 'L'} ${x} ${y}`;
-  }).join(' ');
-  
-  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-  path.setAttribute('d', pathData);
-  path.setAttribute('stroke', '#4A90E2');
-  path.setAttribute('stroke-width', '3');
-  path.setAttribute('fill', 'none');
-  svg.appendChild(path);
-  
-  // Draw points
-  dataPoints.forEach(point => {
-    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-    circle.setAttribute('cx', xScale(point.date));
-    circle.setAttribute('cy', yScale(point.xp));
-    circle.setAttribute('r', '4');
-    circle.setAttribute('fill', '#7B68EE');
-    svg.appendChild(circle);
-  });
-  
-  // Add labels
-  const xLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-  xLabel.setAttribute('x', width / 2);
-  xLabel.setAttribute('y', height - 10);
-  xLabel.setAttribute('text-anchor', 'middle');
-  xLabel.textContent = 'Time';
-  svg.appendChild(xLabel);
-  
-  const yLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-  yLabel.setAttribute('x', 20);
-  yLabel.setAttribute('y', height / 2);
-  yLabel.setAttribute('text-anchor', 'middle');
-  yLabel.setAttribute('transform', `rotate(-90, 20, ${height / 2})`);
-  yLabel.textContent = 'Total XP';
-  svg.appendChild(yLabel);
-  
-  console.log(`✅ Graph drawn with ${dataPoints.length} points, max XP: ${maxXP}`);
+
+  return { points, total };
 }
 
-// Fetch XP transactions for graph
-async function fetchXPData() {
-  const jwt = localStorage.getItem('jwt');
-  if (!jwt) return null;
-  
-  const query = `
-    query {
-      transaction(
-        where: { type: { _eq: "xp" } }
-        order_by: { createdAt: asc }
-      ) {
-        amount
-        createdAt
-      }
+
+function drawXPGraph(points) {
+  if (!xpSvg) return;
+
+  xpSvg.innerHTML = "";
+
+  if (!points || points.length === 0) {
+    const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    t.setAttribute("x", "20");
+    t.setAttribute("y", "30");
+    t.textContent = "No XP data";
+    xpSvg.appendChild(t);
+    return;
+  }
+
+  const width = 900;
+  const height = 420;
+  const padding = 60;
+
+  xpSvg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+
+  const minTime = points[0].date.getTime();
+  const maxTime = points[points.length - 1].date.getTime();
+  const dateRange = Math.max(1, maxTime - minTime);
+
+  const maxXP = Math.max(1, points[points.length - 1].total);
+
+  const xScale = (d) => {
+    const time = d.getTime();
+    const ratio = (time - minTime) / dateRange;
+    return padding + ratio * (width - 2 * padding);
+  };
+
+  const yScale = (xp) => {
+    const ratio = xp / maxXP;
+    return height - padding - ratio * (height - 2 * padding);
+  };
+
+  const mkLine = (x1, y1, x2, y2) => {
+    const el = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    el.setAttribute("x1", String(x1));
+    el.setAttribute("y1", String(y1));
+    el.setAttribute("x2", String(x2));
+    el.setAttribute("y2", String(y2));
+    return el;
+  };
+
+  const mkText = (x, y, text, anchor) => {
+    const el = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    el.setAttribute("x", String(x));
+    el.setAttribute("y", String(y));
+    if (anchor) el.setAttribute("text-anchor", anchor);
+    el.setAttribute("font-size", "12");
+    el.textContent = text;
+    return el;
+  };
+
+  const xAxis = mkLine(padding, height - padding, width - padding, height - padding);
+  xAxis.setAttribute("stroke", "#333");
+  xAxis.setAttribute("stroke-width", "2");
+  xpSvg.appendChild(xAxis);
+
+  const yAxis = mkLine(padding, padding, padding, height - padding);
+  yAxis.setAttribute("stroke", "#333");
+  yAxis.setAttribute("stroke-width", "2");
+  xpSvg.appendChild(yAxis);
+
+  const yTicks = 5;
+  for (let i = 0; i <= yTicks; i++) {
+    const ratio = i / yTicks;
+    const xpVal = (1 - ratio) * maxXP;
+    const y = padding + ratio * (height - 2 * padding);
+
+    const grid = mkLine(padding, y, width - padding, y);
+    grid.setAttribute("stroke", "#e6e6e6");
+    grid.setAttribute("stroke-width", "1");
+    xpSvg.appendChild(grid);
+
+    const tick = mkLine(padding - 6, y, padding, y);
+    tick.setAttribute("stroke", "#333");
+    tick.setAttribute("stroke-width", "1");
+    xpSvg.appendChild(tick);
+
+    const label = mkText(padding - 10, y + 4, formatXP(xpVal), "end");
+    label.setAttribute("fill", "#444");
+    xpSvg.appendChild(label);
+  }
+
+  const xTicks = 5;
+  const dtf = new Intl.DateTimeFormat(undefined, { month: "short", year: "2-digit" });
+  for (let i = 0; i <= xTicks; i++) {
+    const ratio = i / xTicks;
+    const time = minTime + ratio * dateRange;
+    const x = padding + ratio * (width - 2 * padding);
+
+    const tick = mkLine(x, height - padding, x, height - padding + 6);
+    tick.setAttribute("stroke", "#333");
+    tick.setAttribute("stroke-width", "1");
+    xpSvg.appendChild(tick);
+
+    const label = mkText(x, height - padding + 22, dtf.format(new Date(time)), "middle");
+    label.setAttribute("fill", "#444");
+    xpSvg.appendChild(label);
+  }
+
+  const xTitle = mkText(width / 2, height - 12, "Time", "middle");
+  xTitle.setAttribute("fill", "#111");
+  xpSvg.appendChild(xTitle);
+
+  const yTitle = mkText(18, height / 2, "Total XP", "middle");
+  yTitle.setAttribute("fill", "#111");
+  yTitle.setAttribute("transform", `rotate(-90 18 ${height / 2})`);
+  xpSvg.appendChild(yTitle);
+
+  const d = points
+    .map((p, i) => {
+      const x = xScale(p.date);
+      const y = yScale(p.total);
+      return `${i === 0 ? "M" : "L"} ${x} ${y}`;
+    })
+    .join(" ");
+
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  path.setAttribute("d", d);
+  path.setAttribute("fill", "none");
+  path.setAttribute("stroke", "#4A90E2");
+  path.setAttribute("stroke-width", "2.5");
+  path.setAttribute("stroke-linejoin", "round");
+  path.setAttribute("stroke-linecap", "round");
+  xpSvg.appendChild(path);
+
+  points.forEach((p) => {
+    const cx = xScale(p.date);
+    const cy = yScale(p.total);
+
+    const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    c.setAttribute("cx", String(cx));
+    c.setAttribute("cy", String(cy));
+    c.setAttribute("r", "3.5");
+    c.setAttribute("fill", "#7B68EE");
+
+    const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
+    title.textContent =
+      `${p.date.toLocaleDateString()}\n` +
+      `${p.name}\n` +
+      `+${formatXP(p.inc)} → ${formatXP(p.total)} total`;
+    c.appendChild(title);
+
+    xpSvg.appendChild(c);
+  });
+
+  console.log(`✅ Graph drawn: ${points.length} points, max=${formatXP(maxXP)}`);
+}
+
+
+async function initProfilePage() {
+  const user = await fetchProfile();
+  renderProfile(user);
+
+  const tx = await fetchXPTransactions();
+
+  const { points, total } = buildXPPoints(tx);
+  if (userXpSpan) userXpSpan.textContent = formatXP(total);
+
+  drawXPGraph(points);
+  drawXPByProjectGraph(points);
+
+}
+
+
+// =====================
+// Auth: login/logout
+// =====================
+function base64Utf8(str) {
+  // btoa fails on non-ascii; this makes it safe.
+  return btoa(unescape(encodeURIComponent(str)));
+}
+
+async function signin(identifier, password) {
+  const encoded = base64Utf8(`${identifier}:${password}`);
+
+  const res = await fetch(SIGNIN_ENDPOINT, {
+    method: "POST",
+    headers: { Authorization: `Basic ${encoded}` },
+  });
+
+  if (!res.ok) {
+    let msg = `Login failed (HTTP ${res.status})`;
+    const ct = res.headers.get("content-type") || "";
+    if (ct.includes("application/json")) {
+      const errJson = await res.json().catch(() => null);
+      msg = errJson?.error || errJson?.message || msg;
+    } else {
+      const errText = await res.text().catch(() => "");
+      if (errText) msg = errText;
     }
-  `;
-  
+    throw new Error(msg);
+  }
+
+  // Zone01 sometimes returns JSON string, sometimes an object.
+  const ct = res.headers.get("content-type") || "";
+  if (ct.includes("application/json")) {
+    const body = await res.json();
+    if (typeof body === "string") return body;
+    if (body?.jwt) return body.jwt;
+    if (body?.token) return body.token;
+    // last resort
+    return JSON.stringify(body);
+  }
+
+  // non-json
+  return await res.text();
+}
+
+// events
+loginForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  const identifier = loginForm.identifier.value;
+  const password = loginForm.password.value;
+
   try {
-    const response = await fetch('https://learn.zone01oujda.ma/api/graphql-engine/v1/graphql', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${jwt}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ query })
-    });
-    
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-    
-    const result = await response.json();
-    
-    if (result.errors) {
-      throw new Error(result.errors[0].message);
-    }
-    
-    return result.data.transaction;
-    
-  } catch (error) {
-    console.error('Failed to fetch XP data:', error);
-    return null;
+    setLoginError("");
+
+    const jwt = await signin(identifier, password);
+    localStorage.setItem("jwt", jwt);
+
+    console.log("Login successful! JWT stored.");
+    showPage("profile");
+    await initProfilePage();
+  } catch (err) {
+    console.error("Login failed:", err);
+    setLoginError(err.message || "Login failed.");
+    logout(); // ensures we don't keep a broken token
+  }
+});
+
+logoutButton.addEventListener("click", logout);
+
+// =====================
+// Initial load
+// =====================
+async function checkLoginStatus() {
+  const jwt = localStorage.getItem("jwt");
+  if (!jwt) {
+    showPage("login");
+    return;
+  }
+
+  showPage("profile");
+  try {
+    await initProfilePage();
+    console.log("User already logged in. Showing profile page.");
+  } catch (err) {
+    console.error("Session invalid, logging out:", err);
+    logout();
   }
 }
+
+checkLoginStatus();
+
+// (optional) debug helper
+window.testMyXP = async function testMyXP() {
+  const tx = await fetchXPTransactions();
+  const { total } = buildXPPoints(tx);
+  console.log("✅ Calculated Total XP:", total);
+  return total;
+};
+
+function buildXPByProject(points) {
+  const map = new Map(); // name -> total earned on that project
+
+  for (const p of points) {
+    map.set(p.name, (map.get(p.name) || 0) + p.inc);
+  }
+
+  return Array.from(map.entries())
+    .map(([name, xp]) => ({ name, xp }))
+    .sort((a, b) => b.xp - a.xp);
+}
+
+function drawXPByProjectGraph(points) {
+  if (!xpByProjectSvg) return;
+
+  xpByProjectSvg.innerHTML = "";
+
+  const data = buildXPByProject(points).slice(0, 12); // top 12
+  if (data.length === 0) return;
+
+  const W = 900, H = 420, P = 60;
+  xpByProjectSvg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+
+  const maxXP = Math.max(1, ...data.map(d => d.xp));
+  const chartW = W - 2 * P;
+  const chartH = H - 2 * P;
+
+  const gap = 10;
+  const barW = (chartW - gap * (data.length - 1)) / data.length;
+
+  const ns = "http://www.w3.org/2000/svg";
+
+  const xAxis = document.createElementNS(ns, "line");
+  xAxis.setAttribute("x1", P);
+  xAxis.setAttribute("y1", H - P);
+  xAxis.setAttribute("x2", W - P);
+  xAxis.setAttribute("y2", H - P);
+  xAxis.setAttribute("stroke", "#333");
+  xAxis.setAttribute("stroke-width", "2");
+  xpByProjectSvg.appendChild(xAxis);
+
+  const yAxis = document.createElementNS(ns, "line");
+  yAxis.setAttribute("x1", P);
+  yAxis.setAttribute("y1", P);
+  yAxis.setAttribute("x2", P);
+  yAxis.setAttribute("y2", H - P);
+  yAxis.setAttribute("stroke", "#333");
+  yAxis.setAttribute("stroke-width", "2");
+  xpByProjectSvg.appendChild(yAxis);
+
+  data.forEach((d, i) => {
+    const x = P + i * (barW + gap);
+    const h = (d.xp / maxXP) * chartH;
+    const y = (H - P) - h;
+
+    const rect = document.createElementNS(ns, "rect");
+    rect.setAttribute("x", x);
+    rect.setAttribute("y", y);
+    rect.setAttribute("width", barW);
+    rect.setAttribute("height", h);
+    rect.setAttribute("fill", "#4A90E2");
+
+    const title = document.createElementNS(ns, "title");
+    title.textContent = `${d.name}\n${formatXP(d.xp)}`;
+    rect.appendChild(title);
+
+    xpByProjectSvg.appendChild(rect);
+
+    const label = document.createElementNS(ns, "text");
+    label.setAttribute("x", x + barW / 2);
+    label.setAttribute("y", H - P + 18);
+    label.setAttribute("text-anchor", "middle");
+    label.setAttribute("font-size", "10");
+    label.textContent = d.name.length > 10 ? d.name.slice(0, 10) + "…" : d.name;
+    xpByProjectSvg.appendChild(label);
+  });
+}
+
